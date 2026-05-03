@@ -4,7 +4,7 @@
 
 use super::hyper_client::ProxyResponse;
 use super::{
-    body_filter::filter_private_params_with_whitelist,
+    body_filter::{filter_private_params_with_whitelist, strip_billing_headers},
     error::*,
     failover_switch::FailoverSwitchManager,
     log_codes::fwd as log_fwd,
@@ -17,7 +17,10 @@ use super::{
     thinking_rectifier::{
         normalize_thinking_type, rectify_anthropic_request, should_rectify_thinking_signature,
     },
-    types::{CopilotOptimizerConfig, OptimizerConfig, ProxyStatus, RectifierConfig},
+    types::{
+        ClaudeCodeOptimizerConfig, CopilotOptimizerConfig, OptimizerConfig, ProxyStatus,
+        RectifierConfig,
+    },
     ProxyError,
 };
 use crate::commands::{CodexOAuthState, CopilotAuthState};
@@ -61,6 +64,8 @@ pub struct RequestForwarder {
     rectifier_config: RectifierConfig,
     /// 优化器配置
     optimizer_config: OptimizerConfig,
+    /// Claude Code 请求优化器配置
+    claude_code_optimizer_config: ClaudeCodeOptimizerConfig,
     /// Copilot 优化器配置
     copilot_optimizer_config: CopilotOptimizerConfig,
     /// 非流式请求超时（秒）
@@ -84,6 +89,7 @@ impl RequestForwarder {
         _streaming_idle_timeout: u64,
         rectifier_config: RectifierConfig,
         optimizer_config: OptimizerConfig,
+        claude_code_optimizer_config: ClaudeCodeOptimizerConfig,
         copilot_optimizer_config: CopilotOptimizerConfig,
     ) -> Self {
         Self {
@@ -98,6 +104,7 @@ impl RequestForwarder {
             session_client_provided,
             rectifier_config,
             optimizer_config,
+            claude_code_optimizer_config,
             copilot_optimizer_config,
             non_streaming_timeout: std::time::Duration::from_secs(non_streaming_timeout),
         }
@@ -990,7 +997,15 @@ impl RequestForwarder {
 
         // 过滤私有参数（以 `_` 开头的字段），防止内部信息泄露到上游
         // 默认使用空白名单，过滤所有 _ 前缀字段
-        let filtered_body = filter_private_params_with_whitelist(request_body, &[]);
+        let mut filtered_body = filter_private_params_with_whitelist(request_body, &[]);
+
+        // 剥离 Claude Desktop billing header，提高 KV cache 命中率
+        if self.claude_code_optimizer_config.enabled
+            && self.claude_code_optimizer_config.strip_billing_header
+        {
+            strip_billing_headers(&mut filtered_body);
+        }
+
         let force_identity_encoding = needs_transform
             || should_force_identity_encoding(&effective_endpoint, &filtered_body, headers);
 

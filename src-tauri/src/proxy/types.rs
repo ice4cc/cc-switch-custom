@@ -269,6 +269,29 @@ impl Default for OptimizerConfig {
     }
 }
 
+/// Claude Code 请求优化器配置
+///
+/// 存储在 settings 表中，key = "claude_code_optimizer_config"
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClaudeCodeOptimizerConfig {
+    /// 总开关（默认开启）
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// 剥离 Claude Desktop billing header，保证 KV cache 命中
+    #[serde(default = "default_true")]
+    pub strip_billing_header: bool,
+}
+
+impl Default for ClaudeCodeOptimizerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            strip_billing_header: true,
+        }
+    }
+}
+
 /// Copilot 优化器配置
 ///
 /// 存储在 settings 表中，key = "copilot_optimizer_config"

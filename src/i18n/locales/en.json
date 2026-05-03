@@ -330,6 +330,13 @@
         "cacheTtl5m": "5 minutes",
         "cacheTtl1h": "1 hour"
       },
+      "claudeCodeOptimizer": {
+        "title": "Claude Code Request Optimizer",
+        "description": "Optimize Claude Code request forwarding to improve provider compatibility and performance",
+        "enabled": "Enable Optimizer",
+        "stripBillingHeader": "Strip Billing Header",
+        "stripBillingHeaderDescription": "Remove x-anthropic-billing-header from system prompt to improve KV cache hit rate (for llama.cpp providers)"
+      },
       "logConfig": {
         "title": "Log Management",
         "description": "Control log output level",

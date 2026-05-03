@@ -109,6 +109,66 @@ fn filter_recursive_with_whitelist(
     }
 }
 
+/// 剥离 Claude Desktop billing header 条目
+///
+/// Claude Desktop 在 system prompt 中插入计费头信息（text 以 "x-anthropic-billing-header" 开头），
+/// 导致 llama.cpp 的 KV cache 无法命中。此函数在代理转发前将其移除。
+/// # Arguments
+/// * `body` - 请求体（可变引用）
+pub fn strip_billing_headers(body: &mut Value) {
+    let prefix = "x-anthropic-billing-header";
+    let mut stripped = 0;
+
+    // 过滤 system 数组中的 billing header
+    if let Some(system) = body.get_mut("system") {
+        if let Some(blocks) = system.as_array_mut() {
+            let before = blocks.len();
+            blocks.retain(|block| {
+                if let (Some("text"), Some(text)) = (
+                    block.get("type").and_then(|v| v.as_str()),
+                    block.get("text").and_then(|v| v.as_str()),
+                ) {
+                    !text.starts_with(prefix)
+                } else {
+                    true
+                }
+            });
+            stripped += blocks.len().saturating_sub(before);
+        }
+    }
+
+    // 过滤 input 数组中每个消息的 content 内容块
+    if let Some(input) = body.get_mut("input") {
+        if let Some(messages) = input.as_array_mut() {
+            for msg in messages {
+                if let Some(content) = msg.get_mut("content") {
+                    if let Some(blocks) = content.as_array_mut() {
+                        let before = blocks.len();
+                        blocks.retain(|block| {
+                            if let (Some("text"), Some(text)) = (
+                                block.get("type").and_then(|v| v.as_str()),
+                                block.get("text").and_then(|v| v.as_str()),
+                            ) {
+                                !text.starts_with(prefix)
+                            } else {
+                                true
+                            }
+                        });
+                        stripped += blocks.len().saturating_sub(before);
+                    }
+                }
+            }
+        }
+    }
+
+    if stripped > 0 {
+        log::debug!(
+            "[BodyFilter] 剥离了 {} 个 billing header 条目",
+            stripped
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

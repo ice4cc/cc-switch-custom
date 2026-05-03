@@ -282,6 +282,29 @@ impl Database {
         self.set_setting("optimizer_config", &json)
     }
 
+    // --- Claude Code 请求优化器配置 ---
+
+    /// 获取 Claude Code 请求优化器配置
+    pub fn get_claude_code_optimizer_config(
+        &self,
+    ) -> Result<crate::proxy::types::ClaudeCodeOptimizerConfig, AppError> {
+        match self.get_setting("claude_code_optimizer_config")? {
+            Some(json) => serde_json::from_str(&json)
+                .map_err(|e| AppError::Database(format!("解析 Claude Code 优化器配置失败: {e}"))),
+            None => Ok(crate::proxy::types::ClaudeCodeOptimizerConfig::default()),
+        }
+    }
+
+    /// 更新 Claude Code 请求优化器配置
+    pub fn set_claude_code_optimizer_config(
+        &self,
+        config: &crate::proxy::types::ClaudeCodeOptimizerConfig,
+    ) -> Result<(), AppError> {
+        let json = serde_json::to_string(config)
+            .map_err(|e| AppError::Database(format!("序列化 Claude Code 优化器配置失败: {e}")))?;
+        self.set_setting("claude_code_optimizer_config", &json)
+    }
+
     // --- Copilot 优化器配置 ---
 
     /// 获取 Copilot 优化器配置

@@ -273,6 +273,30 @@ pub async fn set_copilot_optimizer_config(
     Ok(true)
 }
 
+/// 获取 Claude Code 请求优化器配置
+#[tauri::command]
+pub async fn get_claude_code_optimizer_config(
+    state: tauri::State<'_, crate::AppState>,
+) -> Result<crate::proxy::types::ClaudeCodeOptimizerConfig, String> {
+    state
+        .db
+        .get_claude_code_optimizer_config()
+        .map_err(|e| e.to_string())
+}
+
+/// 设置 Claude Code 请求优化器配置
+#[tauri::command]
+pub async fn set_claude_code_optimizer_config(
+    state: tauri::State<'_, crate::AppState>,
+    config: crate::proxy::types::ClaudeCodeOptimizerConfig,
+) -> Result<bool, String> {
+    state
+        .db
+        .set_claude_code_optimizer_config(&config)
+        .map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
 /// 获取日志配置
 #[tauri::command]
 pub async fn get_log_config(

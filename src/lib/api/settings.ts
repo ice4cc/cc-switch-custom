@@ -208,6 +208,16 @@ export const settingsApi = {
     return await invoke("set_optimizer_config", { config });
   },
 
+  async getClaudeCodeOptimizerConfig(): Promise<ClaudeCodeOptimizerConfig> {
+    return await invoke("get_claude_code_optimizer_config");
+  },
+
+  async setClaudeCodeOptimizerConfig(
+    config: ClaudeCodeOptimizerConfig,
+  ): Promise<boolean> {
+    return await invoke("set_claude_code_optimizer_config", { config });
+  },
+
   async getLogConfig(): Promise<LogConfig> {
     return await invoke("get_log_config");
   },
@@ -228,6 +238,11 @@ export interface OptimizerConfig {
   thinkingOptimizer: boolean;
   cacheInjection: boolean;
   cacheTtl: string;
+}
+
+export interface ClaudeCodeOptimizerConfig {
+  enabled: boolean;
+  stripBillingHeader: boolean;
 }
 
 export interface LogConfig {

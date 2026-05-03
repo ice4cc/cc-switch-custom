@@ -5,8 +5,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   settingsApi,
-  type RectifierConfig,
+  type ClaudeCodeOptimizerConfig,
   type OptimizerConfig,
+  type RectifierConfig,
 } from "@/lib/api/settings";
 
 export function RectifierConfigPanel() {
@@ -22,6 +23,11 @@ export function RectifierConfigPanel() {
     cacheInjection: true,
     cacheTtl: "1h",
   });
+  const [claudeCodeOptimizerConfig, setClaudeCodeOptimizerConfig] =
+    useState<ClaudeCodeOptimizerConfig>({
+      enabled: true,
+      stripBillingHeader: true,
+    });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +40,12 @@ export function RectifierConfigPanel() {
       .getOptimizerConfig()
       .then(setOptimizerConfig)
       .catch((e) => console.error("Failed to load optimizer config:", e));
+    settingsApi
+      .getClaudeCodeOptimizerConfig()
+      .then(setClaudeCodeOptimizerConfig)
+      .catch((e) =>
+        console.error("Failed to load claude code optimizer config:", e),
+      );
   }, []);
 
   const handleChange = async (updates: Partial<RectifierConfig>) => {
@@ -57,6 +69,20 @@ export function RectifierConfigPanel() {
       console.error("Failed to save optimizer config:", e);
       toast.error(String(e));
       setOptimizerConfig(optimizerConfig);
+    }
+  };
+
+  const handleClaudeCodeOptimizerChange = async (
+    updates: Partial<ClaudeCodeOptimizerConfig>,
+  ) => {
+    const newConfig = { ...claudeCodeOptimizerConfig, ...updates };
+    setClaudeCodeOptimizerConfig(newConfig);
+    try {
+      await settingsApi.setClaudeCodeOptimizerConfig(newConfig);
+    } catch (e) {
+      console.error("Failed to save claude code optimizer config:", e);
+      toast.error(String(e));
+      setClaudeCodeOptimizerConfig(claudeCodeOptimizerConfig);
     }
   };
 
@@ -197,6 +223,59 @@ export function RectifierConfigPanel() {
                 </select>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t pt-6 mt-6">
+        <div className="space-y-1 mb-4">
+          <h3 className="text-sm font-medium">
+            {t("settings.advanced.claudeCodeOptimizer.title")}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {t("settings.advanced.claudeCodeOptimizer.description")}
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>
+                {t("settings.advanced.claudeCodeOptimizer.enabled")}
+              </Label>
+            </div>
+            <Switch
+              checked={claudeCodeOptimizerConfig.enabled}
+              onCheckedChange={(checked) =>
+                handleClaudeCodeOptimizerChange({ enabled: checked })
+              }
+            />
+          </div>
+
+          <div className="space-y-4 pl-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>
+                  {t(
+                    "settings.advanced.claudeCodeOptimizer.stripBillingHeader",
+                  )}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    "settings.advanced.claudeCodeOptimizer.stripBillingHeaderDescription",
+                  )}
+                </p>
+              </div>
+              <Switch
+                checked={claudeCodeOptimizerConfig.stripBillingHeader}
+                disabled={!claudeCodeOptimizerConfig.enabled}
+                onCheckedChange={(checked) =>
+                  handleClaudeCodeOptimizerChange({
+                    stripBillingHeader: checked,
+                  })
+                }
+              />
+            </div>
           </div>
         </div>
       </div>

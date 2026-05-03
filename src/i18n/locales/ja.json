@@ -330,6 +330,13 @@
         "cacheTtl5m": "5 分",
         "cacheTtl1h": "1 時間"
       },
+      "claudeCodeOptimizer": {
+        "title": "Claude Code リクエストオプティマイザー",
+        "description": "Claude Code リクエストの転送を最適化し、プロバイダの互換性とパフォーマンスを向上させる",
+        "enabled": "オプティマイザーを有効化",
+        "stripBillingHeader": "課金ヘッダーを削除",
+        "stripBillingHeaderDescription": "システムプロンプトから x-anthropic-billing-header を削除し、llama.cpp プロバイダの KV キャッシュヒット率を向上させる"
+      },
       "logConfig": {
         "title": "ログ管理",
         "description": "ログ出力レベルを制御",
