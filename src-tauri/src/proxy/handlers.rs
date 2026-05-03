@@ -140,6 +140,54 @@ pub async fn handle_messages(
     process_response(response, &ctx, &state, &CLAUDE_PARSER_CONFIG).await
 }
 
+// ============================================================================
+// Count Tokens Handler (本地估算，不转发到上游)
+// ============================================================================
+
+/// Handle /v1/messages/count_tokens requests locally.
+///
+/// Claude Desktop calls this before/after each turn to decide if context needs compaction.
+/// Forwarding to llama.cpp would pollute KV cache without benefit.
+pub async fn handle_count_tokens(
+    State(state): State<ProxyState>,
+    request: axum::extract::Request,
+) -> Result<axum::response::Response, ProxyError> {
+    let optimizer_config = tokio::task::block_in_place(|| {
+        state.db.get_claude_code_optimizer_config().unwrap_or_default()
+    });
+    if !optimizer_config.enabled || !optimizer_config.intercept_count_tokens {
+        return handle_messages(State(state), request).await;
+    }
+
+    let (_parts, body) = request.into_parts();
+    let body_bytes = body
+        .collect()
+        .await
+        .map_err(|e| ProxyError::Internal(format!("Failed to read request body: {e}")))?
+        .to_bytes();
+    let body: Value = serde_json::from_slice(&body_bytes)
+        .map_err(|e| ProxyError::Internal(format!("Failed to parse request body: {e}")))?;
+
+    let input_tokens = super::token_estimator::estimate_count_tokens(&body);
+
+    log::debug!(
+        "[CountTokens] Local estimate: {} tokens (model={})",
+        input_tokens,
+        body.get("model").and_then(|m| m.as_str()).unwrap_or("unknown")
+    );
+
+    let response = (
+        StatusCode::OK,
+        Json(json!({
+            "input_tokens": input_tokens,
+            "output_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0
+        })),
+    );
+    Ok(response.into_response())
+}
+
 /// Claude 格式转换处理（独有逻辑）
 ///
 /// 支持 OpenAI Chat Completions 和 Responses API 两种格式的转换

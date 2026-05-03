@@ -281,6 +281,9 @@ pub struct ClaudeCodeOptimizerConfig {
     /// 剥离 Claude Desktop billing header，保证 KV cache 命中
     #[serde(default = "default_true")]
     pub strip_billing_header: bool,
+    /// 拦截 count_tokens 请求，本地估算 token 数，保护 llama.cpp KV cache
+    #[serde(default = "default_true")]
+    pub intercept_count_tokens: bool,
 }
 
 impl Default for ClaudeCodeOptimizerConfig {
@@ -288,6 +291,7 @@ impl Default for ClaudeCodeOptimizerConfig {
         Self {
             enabled: true,
             strip_billing_header: true,
+            intercept_count_tokens: true,
         }
     }
 }

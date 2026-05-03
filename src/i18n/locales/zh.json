@@ -335,7 +335,9 @@
         "description": "优化 Claude Code 请求转发，提升供应商兼容性和性能",
         "enabled": "启用优化器",
         "stripBillingHeader": "剥离计费头信息",
-        "stripBillingHeaderDescription": "从系统提示中移除 x-anthropic-billing-header，提高 llama.cpp 供应商的 KV cache 命中率"
+        "stripBillingHeaderDescription": "从系统提示中移除 x-anthropic-billing-header，提高 llama.cpp 供应商的 KV cache 命中率",
+        "interceptCountTokens": "拦截 count_tokens 请求",
+        "interceptCountTokensDescription": "本地估算 token 数，避免将计数请求转发给上游，保护 llama.cpp KV cache"
       },
       "logConfig": {
         "title": "日志管理",

@@ -283,6 +283,15 @@ impl ProxyServer {
             .route("/health", get(handlers::health_check))
             .route("/status", get(handlers::get_status))
             // Claude API (支持带前缀和不带前缀两种格式)
+            // count_tokens 必须在 /v1/messages 之前注册，否则会被父路由匹配
+            .route(
+                "/v1/messages/count_tokens",
+                post(handlers::handle_count_tokens),
+            )
+            .route(
+                "/claude/v1/messages/count_tokens",
+                post(handlers::handle_count_tokens),
+            )
             .route("/v1/messages", post(handlers::handle_messages))
             .route("/claude/v1/messages", post(handlers::handle_messages))
             // OpenAI Chat Completions API (Codex CLI，支持带前缀和不带前缀)

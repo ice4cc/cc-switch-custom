@@ -335,7 +335,9 @@
         "description": "Optimize Claude Code request forwarding to improve provider compatibility and performance",
         "enabled": "Enable Optimizer",
         "stripBillingHeader": "Strip Billing Header",
-        "stripBillingHeaderDescription": "Remove x-anthropic-billing-header from system prompt to improve KV cache hit rate (for llama.cpp providers)"
+        "stripBillingHeaderDescription": "Remove x-anthropic-billing-header from system prompt to improve KV cache hit rate (for llama.cpp providers)",
+        "interceptCountTokens": "Intercept count_tokens requests",
+        "interceptCountTokensDescription": "Estimate tokens locally instead of forwarding to upstream, protecting llama.cpp KV cache"
       },
       "logConfig": {
         "title": "Log Management",

@@ -335,7 +335,9 @@
         "description": "Claude Code リクエストの転送を最適化し、プロバイダの互換性とパフォーマンスを向上させる",
         "enabled": "オプティマイザーを有効化",
         "stripBillingHeader": "課金ヘッダーを削除",
-        "stripBillingHeaderDescription": "システムプロンプトから x-anthropic-billing-header を削除し、llama.cpp プロバイダの KV キャッシュヒット率を向上させる"
+        "stripBillingHeaderDescription": "システムプロンプトから x-anthropic-billing-header を削除し、llama.cpp プロバイダの KV キャッシュヒット率を向上させる",
+        "interceptCountTokens": "count_tokens リクエストをインターセプト",
+        "interceptCountTokensDescription": "トークンをローカルで推定して上流への転送を避け、llama.cpp の KV キャッシュを保護"
       },
       "logConfig": {
         "title": "ログ管理",

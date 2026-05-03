@@ -27,6 +27,7 @@ export function RectifierConfigPanel() {
     useState<ClaudeCodeOptimizerConfig>({
       enabled: true,
       stripBillingHeader: true,
+      interceptCountTokens: true,
     });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -272,6 +273,29 @@ export function RectifierConfigPanel() {
                 onCheckedChange={(checked) =>
                   handleClaudeCodeOptimizerChange({
                     stripBillingHeader: checked,
+                  })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>
+                  {t(
+                    "settings.advanced.claudeCodeOptimizer.interceptCountTokens",
+                  )}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    "settings.advanced.claudeCodeOptimizer.interceptCountTokensDescription",
+                  )}
+                </p>
+              </div>
+              <Switch
+                checked={claudeCodeOptimizerConfig.interceptCountTokens}
+                disabled={!claudeCodeOptimizerConfig.enabled}
+                onCheckedChange={(checked) =>
+                  handleClaudeCodeOptimizerChange({
+                    interceptCountTokens: checked,
                   })
                 }
               />
