@@ -1944,6 +1944,24 @@ impl ProxyService {
         }
         Ok(())
     }
+
+    /// 获取最近的代理请求日志（内存缓存）
+    pub async fn get_recent_logs(
+        &self,
+        app_type: Option<String>,
+        limit: Option<usize>,
+    ) -> Result<Vec<crate::proxy::RequestLogEntry>, String> {
+        if let Some(server) = self.server.read().await.as_ref() {
+            let entries = if let Some(ref app) = app_type {
+                server.get_request_logs_by_app(app, limit)
+            } else {
+                server.get_request_logs(limit)
+            };
+            Ok(entries)
+        } else {
+            Ok(Vec::new())
+        }
+    }
 }
 
 #[cfg(test)]

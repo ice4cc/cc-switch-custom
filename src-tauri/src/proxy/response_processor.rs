@@ -6,6 +6,7 @@ use super::{
     handler_config::UsageParserConfig,
     handler_context::{RequestContext, StreamingTimeoutConfig},
     hyper_client::ProxyResponse,
+    request_log::{simplify_request_body, simplify_response_body, RequestLogEntry},
     server::ProxyState,
     sse::{strip_sse_field, take_sse_block},
     usage::parser::TokenUsage,
@@ -314,6 +315,19 @@ pub async fn handle_non_streaming(
         );
     }
 
+    // 写入内存日志缓冲区
+    push_to_log_buffer(
+        &state.request_log_buffer,
+        &ctx.request_body,
+        &body_bytes,
+        &ctx.provider.id,
+        &ctx.provider.name,
+        &ctx.request_model,
+        ctx.app_type_str,
+        status.as_u16(),
+        ctx.start_time.elapsed().as_millis() as u64,
+    );
+
     // 构建响应
     let mut builder = axum::response::Response::builder().status(status);
     for (key, value) in response_headers.iter() {
@@ -432,6 +446,7 @@ fn create_usage_collector(
         .unwrap_or(true);
     let state = state.clone();
     let provider_id = ctx.provider.id.clone();
+    let provider_name = ctx.provider.name.clone();
     let request_model = ctx.request_model.clone();
     let app_type_str = parser_config.app_type_str;
     let tag = ctx.tag;
@@ -439,6 +454,9 @@ fn create_usage_collector(
     let stream_parser = parser_config.stream_parser;
     let model_extractor = parser_config.model_extractor;
     let session_id = ctx.session_id.clone();
+    // Clone for buffer push
+    let request_body = ctx.request_body.clone();
+    let log_buffer = state.request_log_buffer.clone();
 
     SseUsageCollector::new(start_time, move |events, first_token_ms| {
         if !logging_enabled {
@@ -495,6 +513,33 @@ fn create_usage_collector(
             });
             log::debug!("[{tag}] 流式响应缺少 usage 统计，跳过消费记录");
         }
+
+        // 写入内存日志缓冲区（流式响应）
+        let simplified_request = simplify_request_body(&request_body);
+        // 对于流式响应，收集所有 SSE 事件作为响应体
+        let response_value = Value::Array(events.clone());
+        let simplified_response = simplify_response_body(&response_value);
+        let latency_ms = start_time.elapsed().as_millis() as u64;
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+
+        let model_for_log = model_extractor(&events, &request_model);
+
+        let entry = RequestLogEntry {
+            timestamp: now as u64,
+            app_type: app_type_str.to_string(),
+            provider_id: provider_id.clone(),
+            provider_name: provider_name.clone(),
+            model: model_for_log,
+            request_body: simplified_request,
+            response_body: simplified_response,
+            status_code,
+            latency_ms,
+            success: status_code >= 200 && status_code < 300,
+        };
+        log_buffer.push(entry);
     })
 }
 
@@ -713,6 +758,56 @@ fn format_headers(headers: &HeaderMap) -> String {
         })
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+/// 将请求/响应内容推入内存日志缓冲区
+fn push_to_log_buffer(
+    buffer: &std::sync::Arc<super::request_log::RequestLogBuffer>,
+    request_body: &Value,
+    response_bytes: &[u8],
+    provider_id: &str,
+    provider_name: &str,
+    _request_model: &str,
+    app_type: &str,
+    status_code: u16,
+    latency_ms: u64,
+) {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
+
+    let simplified_request = simplify_request_body(request_body);
+
+    // 尝试解析响应为 JSON，失败则存储原始文本
+    let response_value: Value = serde_json::from_slice(response_bytes).unwrap_or_else(|_| {
+        let text = String::from_utf8_lossy(response_bytes);
+        Value::String(text.to_string())
+    });
+    let simplified_response = simplify_response_body(&response_value);
+
+    let success = status_code >= 200 && status_code < 300;
+
+    let model = request_body
+        .get("model")
+        .and_then(|m| m.as_str())
+        .unwrap_or(_request_model)
+        .to_string();
+
+    let entry = RequestLogEntry {
+        timestamp: now,
+        app_type: app_type.to_string(),
+        provider_id: provider_id.to_string(),
+        provider_name: provider_name.to_string(),
+        model,
+        request_body: simplified_request,
+        response_body: simplified_response,
+        status_code,
+        latency_ms,
+        success,
+    };
+
+    buffer.push(entry);
 }
 
 #[cfg(test)]

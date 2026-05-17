@@ -1227,6 +1227,13 @@
     "cacheReadCostPerMillion": "缓存读取成本 (每百万 tokens, USD)",
     "cacheCreationCostPerMillion": "缓存写入成本 (每百万 tokens, USD)"
   },
+  "proxyLog": {
+    "title": "实时代理日志",
+    "empty": "暂无代理请求。通过代理发送请求后，日志将显示在这里。",
+    "request": "请求",
+    "response": "响应",
+    "copied": "已复制"
+  },
   "usageScript": {
     "title": "配置用量查询",
     "enableUsageQuery": "启用用量查询",

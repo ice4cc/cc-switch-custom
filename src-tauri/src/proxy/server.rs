@@ -10,8 +10,8 @@
 
 use super::{
     failover_switch::FailoverSwitchManager, handlers, log_codes::srv as log_srv,
-    provider_router::ProviderRouter, providers::gemini_shadow::GeminiShadowStore, types::*,
-    ProxyError,
+    provider_router::ProviderRouter, providers::gemini_shadow::GeminiShadowStore,
+    request_log::RequestLogBuffer, types::*, ProxyError,
 };
 use crate::database::Database;
 use axum::{
@@ -42,6 +42,8 @@ pub struct ProxyState {
     pub app_handle: Option<tauri::AppHandle>,
     /// 故障转移切换管理器
     pub failover_manager: Arc<FailoverSwitchManager>,
+    /// 内存请求日志缓冲区（最近 N 次请求/响应内容）
+    pub request_log_buffer: Arc<RequestLogBuffer>,
 }
 
 /// 代理HTTP服务器
@@ -74,6 +76,7 @@ impl ProxyServer {
             gemini_shadow: Arc::new(GeminiShadowStore::default()),
             app_handle,
             failover_manager,
+            request_log_buffer: Arc::new(RequestLogBuffer::new(200)),
         };
 
         Self {
@@ -359,5 +362,22 @@ impl ProxyServer {
             .provider_router
             .reset_provider_breaker(provider_id, app_type)
             .await;
+    }
+
+    /// 获取最近的代理请求日志
+    pub fn get_request_logs(
+        &self,
+        limit: Option<usize>,
+    ) -> Vec<super::request_log::RequestLogEntry> {
+        self.state.request_log_buffer.recent(limit)
+    }
+
+    /// 按应用类型获取代理请求日志
+    pub fn get_request_logs_by_app(
+        &self,
+        app_type: &str,
+        limit: Option<usize>,
+    ) -> Vec<super::request_log::RequestLogEntry> {
+        self.state.request_log_buffer.by_app_type(app_type, limit)
     }
 }

@@ -7,6 +7,7 @@ import type {
   GlobalProxyConfig,
   AppProxyConfig,
 } from "@/types/proxy";
+import type { ProxyRequestLogEntry } from "@/types/usage";
 
 export const proxyApi = {
   // ========== 代理服务器控制 API ==========
@@ -116,5 +117,15 @@ export const proxyApi = {
   // 设置计费模式来源
   async setPricingModelSource(appType: string, value: string): Promise<void> {
     return invoke("set_pricing_model_source", { appType, value });
+  },
+
+  // ========== 内存请求日志 API ==========
+
+  // 获取最近的代理请求日志
+  async getRecentProxyLogs(
+    appType?: string,
+    limit?: number,
+  ): Promise<ProxyRequestLogEntry[]> {
+    return invoke("get_recent_proxy_logs", { appType, limit });
   },
 };

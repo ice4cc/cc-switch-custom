@@ -1227,6 +1227,13 @@
     "cacheReadCostPerMillion": "キャッシュ読み取りコスト（100万トークンあたり、USD）",
     "cacheCreationCostPerMillion": "キャッシュ書き込みコスト（100万トークンあたり、USD）"
   },
+  "proxyLog": {
+    "title": "リアルタイムプロキシログ",
+    "empty": "プロキシリクエストがありません。プロキシ経由でリクエストを送信すると、ログがここに表示されます。",
+    "request": "リクエスト",
+    "response": "レスポンス",
+    "copied": "コピーしました"
+  },
   "usageScript": {
     "title": "利用状況を設定",
     "enableUsageQuery": "利用状況照会を有効にする",

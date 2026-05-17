@@ -1227,6 +1227,13 @@
     "cacheReadCostPerMillion": "Cache Read Cost (per million tokens, USD)",
     "cacheCreationCostPerMillion": "Cache Write Cost (per million tokens, USD)"
   },
+  "proxyLog": {
+    "title": "Real-time Proxy Log",
+    "empty": "No proxy requests yet. Send a request through the proxy to see logs here.",
+    "request": "Request",
+    "response": "Response",
+    "copied": "Copied"
+  },
   "usageScript": {
     "title": "Configure Usage Query",
     "enableUsageQuery": "Enable usage query",

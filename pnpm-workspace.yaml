@@ -1,4 +1,1 @@
 packages: []
-
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'

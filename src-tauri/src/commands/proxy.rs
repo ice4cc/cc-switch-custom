@@ -3,6 +3,7 @@
 //! 提供前端调用的 API 接口
 
 use crate::error::AppError;
+use crate::proxy::RequestLogEntry;
 use crate::proxy::types::*;
 use crate::proxy::{CircuitBreakerConfig, CircuitBreakerStats};
 use crate::store::AppState;
@@ -419,4 +420,16 @@ pub async fn get_circuit_breaker_stats(
     // 目前先返回 None，后续可以通过 ProxyService 暴露接口来实现
     let _ = (state, provider_id, app_type);
     Ok(None)
+}
+
+/// 获取最近的代理请求日志（内存缓存）
+///
+/// 返回最近 N 次请求/响应的原始内容，重启后丢失
+#[tauri::command]
+pub async fn get_recent_proxy_logs(
+    state: tauri::State<'_, AppState>,
+    app_type: Option<String>,
+    limit: Option<usize>,
+) -> Result<Vec<RequestLogEntry>, String> {
+    state.proxy_service.get_recent_logs(app_type, limit).await
 }

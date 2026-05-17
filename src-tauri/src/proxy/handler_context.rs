@@ -38,6 +38,8 @@ pub struct StreamingTimeoutConfig {
 pub struct RequestContext {
     /// 请求开始时间
     pub start_time: Instant,
+    /// 原始请求体（用于内存日志缓冲）
+    pub request_body: serde_json::Value,
     /// 应用级代理配置（per-app，包含重试次数和超时配置）
     pub app_config: AppProxyConfig,
     /// 选中的 Provider（故障转移链的第一个）
@@ -161,6 +163,7 @@ impl RequestContext {
 
         Ok(Self {
             start_time,
+            request_body: body.clone(),
             app_config,
             provider,
             providers,

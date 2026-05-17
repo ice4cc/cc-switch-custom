@@ -136,3 +136,18 @@ export interface StatsFilters {
   providerId?: string;
   appType?: string;
 }
+
+// ========== 内存代理请求日志 ==========
+
+export interface ProxyRequestLogEntry {
+  timestamp: number;
+  appType: string;
+  providerId: string;
+  providerName: string;
+  model: string;
+  requestBody: Record<string, unknown>;
+  responseBody: Record<string, unknown>;
+  statusCode: number;
+  latencyMs: number;
+  success: boolean;
+}

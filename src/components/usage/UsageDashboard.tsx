@@ -5,6 +5,7 @@ import { UsageTrendChart } from "./UsageTrendChart";
 import { RequestLogTable } from "./RequestLogTable";
 import { ProviderStatsTable } from "./ProviderStatsTable";
 import { ModelStatsTable } from "./ModelStatsTable";
+import { RequestLogViewer } from "./RequestLogViewer";
 import type { AppTypeFilter, UsageRangeSelection } from "@/types/usage";
 import { motion } from "framer-motion";
 import {
@@ -13,6 +14,7 @@ import {
   Activity,
   RefreshCw,
   Coins,
+  ServerCrash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
@@ -156,6 +158,10 @@ export function UsageDashboard() {
                 <BarChart3 className="h-4 w-4" />
                 {t("usage.modelStats")}
               </TabsTrigger>
+              <TabsTrigger value="proxyLog" className="gap-2">
+                <ServerCrash className="h-4 w-4" />
+                {t("proxyLog.title", "Real-time Proxy Log")}
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -187,6 +193,12 @@ export function UsageDashboard() {
                 range={range}
                 appType={appType}
                 refreshIntervalMs={refreshIntervalMs}
+              />
+            </TabsContent>
+
+            <TabsContent value="proxyLog" className="mt-0">
+              <RequestLogViewer
+                appType={appType}
               />
             </TabsContent>
           </motion.div>
