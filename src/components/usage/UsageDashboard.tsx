@@ -196,9 +196,7 @@ export function UsageDashboard() {
             </TabsContent>
 
             <TabsContent value="proxyLog" className="mt-0">
-              <RequestLogViewer
-                appType={appType}
-              />
+              <RequestLogViewer appType={appType} />
             </TabsContent>
           </motion.div>
         </Tabs>

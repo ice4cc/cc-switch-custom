@@ -107,7 +107,8 @@ export function RequestLogViewer({ appType }: RequestLogViewerProps) {
 
   const statusColor = (code: number) => {
     if (code >= 500) return "bg-red-500/20 text-red-600 dark:text-red-400";
-    if (code >= 400) return "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400";
+    if (code >= 400)
+      return "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400";
     return "bg-green-500/20 text-green-600 dark:text-green-400";
   };
 
@@ -138,7 +139,10 @@ export function RequestLogViewer({ appType }: RequestLogViewerProps) {
       {logs.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border/50 p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            {t("proxyLog.empty", "No proxy requests yet. Send a request through the proxy to see logs here.")}
+            {t(
+              "proxyLog.empty",
+              "No proxy requests yet. Send a request through the proxy to see logs here.",
+            )}
           </p>
         </div>
       ) : (
@@ -147,12 +151,24 @@ export function RequestLogViewer({ appType }: RequestLogViewerProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[40px]"></TableHead>
-                <TableHead className="w-[90px]">{t("usage.time", "Time")}</TableHead>
-                <TableHead className="w-[80px]">{t("usage.appFilter.all", "App")}</TableHead>
-                <TableHead className="w-[120px]">{t("usage.provider", "Provider")}</TableHead>
-                <TableHead className="w-[100px]">{t("usage.requestModel", "Model")}</TableHead>
-                <TableHead className="w-[70px]">{t("usage.status", "Status")}</TableHead>
-                <TableHead className="w-[80px]">{t("usage.timingInfo", "Latency")}</TableHead>
+                <TableHead className="w-[90px]">
+                  {t("usage.time", "Time")}
+                </TableHead>
+                <TableHead className="w-[80px]">
+                  {t("usage.appFilter.all", "App")}
+                </TableHead>
+                <TableHead className="w-[120px]">
+                  {t("usage.provider", "Provider")}
+                </TableHead>
+                <TableHead className="w-[100px]">
+                  {t("usage.requestModel", "Model")}
+                </TableHead>
+                <TableHead className="w-[70px]">
+                  {t("usage.status", "Status")}
+                </TableHead>
+                <TableHead className="w-[80px]">
+                  {t("usage.timingInfo", "Latency")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -185,7 +201,10 @@ export function RequestLogViewer({ appType }: RequestLogViewerProps) {
                       <TableCell className="text-xs">
                         {log.providerName || log.providerId}
                       </TableCell>
-                      <TableCell className="text-xs truncate max-w-[120px]" title={log.model}>
+                      <TableCell
+                        className="text-xs truncate max-w-[120px]"
+                        title={log.model}
+                      >
                         {log.model}
                       </TableCell>
                       <TableCell>

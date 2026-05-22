@@ -123,6 +123,12 @@ type PresetEntry = {
     | HermesProviderPreset;
 };
 
+const codexWireApiFromApiFormat = (
+  format: CodexApiFormat,
+): "responses" | "chat" => {
+  return format === "openai_chat" ? "chat" : "responses";
+};
+
 const codexApiFormatFromWireApi = (
   wireApi: string | undefined,
 ): CodexApiFormat | undefined => {
@@ -489,7 +495,10 @@ function ProviderFormFull({
     (format: CodexApiFormat) => {
       setLocalCodexApiFormat(format);
       setCodexConfig((prev) => {
-        const updated = setCodexWireApi(prev, "responses");
+        const updated = setCodexWireApi(
+          prev,
+          codexWireApiFromApiFormat(format),
+        );
         debouncedValidate(updated);
         return updated;
       });
@@ -1111,7 +1120,10 @@ function ProviderFormFull({
         const authJson = JSON.parse(codexAuth);
         const normalizedCodexConfig =
           category !== "official" && (codexConfig ?? "").trim()
-            ? setCodexWireApi(codexConfig ?? "", "responses")
+            ? setCodexWireApi(
+                codexConfig ?? "",
+                codexWireApiFromApiFormat(localCodexApiFormat),
+              )
             : (codexConfig ?? "");
         const configObj = {
           auth: authJson,
