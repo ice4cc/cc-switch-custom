@@ -9,9 +9,13 @@
 //! a direct (non-proxied) CLI request.
 
 use super::{
-    failover_switch::FailoverSwitchManager, handlers, log_codes::srv as log_srv,
-    provider_router::ProviderRouter, providers::gemini_shadow::GeminiShadowStore,
-    request_log::RequestLogBuffer, types::*, ProxyError,
+    failover_switch::FailoverSwitchManager,
+    handlers,
+    log_codes::srv as log_srv,
+    provider_router::ProviderRouter,
+    providers::{codex_chat_history::CodexChatHistoryStore, gemini_shadow::GeminiShadowStore},
+    types::*,
+    ProxyError,
 };
 use crate::database::Database;
 use axum::{
@@ -38,12 +42,12 @@ pub struct ProxyState {
     pub provider_router: Arc<ProviderRouter>,
     /// Gemini Native shadow state，用于 thoughtSignature / tool call 回放
     pub gemini_shadow: Arc<GeminiShadowStore>,
+    /// Codex Chat bridge history，用于恢复 previous_response_id 指向的 tool call
+    pub codex_chat_history: Arc<CodexChatHistoryStore>,
     /// AppHandle，用于发射事件和更新托盘菜单
     pub app_handle: Option<tauri::AppHandle>,
     /// 故障转移切换管理器
     pub failover_manager: Arc<FailoverSwitchManager>,
-    /// 内存请求日志缓冲区（最近 N 次请求/响应内容）
-    pub request_log_buffer: Arc<RequestLogBuffer>,
 }
 
 /// 代理HTTP服务器
@@ -74,9 +78,9 @@ impl ProxyServer {
             current_providers: Arc::new(RwLock::new(std::collections::HashMap::new())),
             provider_router,
             gemini_shadow: Arc::new(GeminiShadowStore::default()),
+            codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
             app_handle,
             failover_manager,
-            request_log_buffer: Arc::new(RequestLogBuffer::new(200)),
         };
 
         Self {
@@ -286,15 +290,6 @@ impl ProxyServer {
             .route("/health", get(handlers::health_check))
             .route("/status", get(handlers::get_status))
             // Claude API (支持带前缀和不带前缀两种格式)
-            // count_tokens 必须在 /v1/messages 之前注册，否则会被父路由匹配
-            .route(
-                "/v1/messages/count_tokens",
-                post(handlers::handle_count_tokens),
-            )
-            .route(
-                "/claude/v1/messages/count_tokens",
-                post(handlers::handle_count_tokens),
-            )
             .route("/v1/messages", post(handlers::handle_messages))
             .route("/claude/v1/messages", post(handlers::handle_messages))
             // Claude Desktop 3P 本地 gateway（独立 provider namespace）
@@ -389,22 +384,5 @@ impl ProxyServer {
             .provider_router
             .reset_provider_breaker(provider_id, app_type)
             .await;
-    }
-
-    /// 获取最近的代理请求日志
-    pub fn get_request_logs(
-        &self,
-        limit: Option<usize>,
-    ) -> Vec<super::request_log::RequestLogEntry> {
-        self.state.request_log_buffer.recent(limit)
-    }
-
-    /// 按应用类型获取代理请求日志
-    pub fn get_request_logs_by_app(
-        &self,
-        app_type: &str,
-        limit: Option<usize>,
-    ) -> Vec<super::request_log::RequestLogEntry> {
-        self.state.request_log_buffer.by_app_type(app_type, limit)
     }
 }
