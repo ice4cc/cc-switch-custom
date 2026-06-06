@@ -14,6 +14,7 @@ use super::{
     log_codes::srv as log_srv,
     provider_router::ProviderRouter,
     providers::{codex_chat_history::CodexChatHistoryStore, gemini_shadow::GeminiShadowStore},
+    request_log::RequestLogBuffer,
     types::*,
     ProxyError,
 };
@@ -48,6 +49,8 @@ pub struct ProxyState {
     pub app_handle: Option<tauri::AppHandle>,
     /// 故障转移切换管理器
     pub failover_manager: Arc<FailoverSwitchManager>,
+    /// 内存请求日志缓冲区（供实时查看）
+    pub request_log_buffer: Arc<RequestLogBuffer>,
 }
 
 /// 代理HTTP服务器
@@ -81,6 +84,7 @@ impl ProxyServer {
             codex_chat_history: Arc::new(CodexChatHistoryStore::default()),
             app_handle,
             failover_manager,
+            request_log_buffer: Arc::new(RequestLogBuffer::new(100)),
         };
 
         Self {
@@ -384,5 +388,19 @@ impl ProxyServer {
             .provider_router
             .reset_provider_breaker(provider_id, app_type)
             .await;
+    }
+
+    /// 获取最近的代理请求日志（内存缓存）
+    pub fn get_request_logs(&self, limit: Option<usize>) -> Vec<crate::proxy::RequestLogEntry> {
+        self.state.request_log_buffer.recent(limit)
+    }
+
+    /// 按应用类型过滤获取最近日志
+    pub fn get_request_logs_by_app(
+        &self,
+        app_type: &str,
+        limit: Option<usize>,
+    ) -> Vec<crate::proxy::RequestLogEntry> {
+        self.state.request_log_buffer.by_app_type(app_type, limit)
     }
 }
