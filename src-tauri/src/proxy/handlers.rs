@@ -62,6 +62,35 @@ pub async fn get_status(State(state): State<ProxyState>) -> Result<Json<ProxySta
     Ok(Json(status))
 }
 
+/// 构建一个最小化的 prompt caching 探针响应
+///
+/// Claude Desktop 期望一个合法的 Anthropic messages API 响应。
+/// 返回零 token 计数的空消息体即可满足客户端的缓存探测需求。
+fn minimal_cache_probe_response(body: &Value) -> axum::response::Response {
+    let model = body.get("model").and_then(|m| m.as_str()).unwrap_or("claude-haiku-4-5");
+    let id = format!("msg_cache_probe_{}", uuid::Uuid::new_v4().as_hyphenated());
+
+    (
+        StatusCode::OK,
+        Json(json!({
+            "id": id,
+            "type": "message",
+            "role": "assistant",
+            "model": model,
+            "content": [{ "type": "text", "text": "" }],
+            "stop_reason": "end_turn",
+            "stop_sequence": null,
+            "usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cache_read_input_tokens": 0,
+                "cache_creation_input_tokens": 0
+            }
+        })),
+    )
+        .into_response()
+}
+
 // ============================================================================
 // Claude API 处理器（包含格式转换逻辑）
 // ============================================================================
@@ -130,6 +159,26 @@ async fn handle_messages_for_app(
         .to_bytes();
     let body: Value = serde_json::from_slice(&body_bytes)
         .map_err(|e| ProxyError::Internal(format!("Failed to parse request body: {e}")))?;
+
+    // 拦截 Claude Desktop prompt caching 探针请求（max_tokens ≤ 1）
+    // 这些是客户端刷 Anthropic prompt cache 的分段探测，转发到 llama.cpp 只会污染 KV cache。
+    if matches!(app_type, AppType::ClaudeDesktop) {
+        let optimizer_config = tokio::task::block_in_place(|| {
+            state.db.get_claude_code_optimizer_config().unwrap_or_default()
+        });
+        if optimizer_config.enabled && optimizer_config.intercept_cache_probe {
+            if let Some(max_tokens) = body.get("max_tokens").and_then(|v| v.as_u64()) {
+                if max_tokens <= 1 {
+                    log::debug!(
+                        "[CacheProbe] Intercepted prompt caching probe (max_tokens={}, model={})",
+                        max_tokens,
+                        body.get("model").and_then(|m| m.as_str()).unwrap_or("unknown")
+                    );
+                    return Ok(minimal_cache_probe_response(&body).into_response());
+                }
+            }
+        }
+    }
 
     let mut ctx =
         RequestContext::new(&state, &body, &headers, app_type.clone(), tag, app_type_str).await?;

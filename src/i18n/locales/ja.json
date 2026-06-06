@@ -392,7 +392,9 @@
         "stripBillingHeader": "課金ヘッダーを削除",
         "stripBillingHeaderDescription": "システムプロンプトから x-anthropic-billing-header を削除し、llama.cpp プロバイダの KV キャッシュヒット率を向上させる",
         "interceptCountTokens": "count_tokens リクエストをインターセプト",
-        "interceptCountTokensDescription": "トークンをローカルで推定して上流への転送を避け、llama.cpp の KV キャッシュを保護"
+        "interceptCountTokensDescription": "トークンをローカルで推定して上流への転送を避け、llama.cpp の KV キャッシュを保護",
+        "interceptCacheProbe": "プロンプトキャッシュプローブをインターセプト",
+        "interceptCacheProbeDescription": "max_tokens≤1 のプローブリクエストにローカルで応答し、llama.cpp の KV キャッシュ汚染を防ぐ"
       },
       "logConfig": {
         "title": "ログ管理",

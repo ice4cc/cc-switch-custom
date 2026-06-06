@@ -392,7 +392,9 @@
         "stripBillingHeader": "Strip Billing Header",
         "stripBillingHeaderDescription": "Remove x-anthropic-billing-header from system prompt to improve KV cache hit rate (for llama.cpp providers)",
         "interceptCountTokens": "Intercept count_tokens requests",
-        "interceptCountTokensDescription": "Estimate tokens locally instead of forwarding to upstream, protecting llama.cpp KV cache"
+        "interceptCountTokensDescription": "Estimate tokens locally instead of forwarding to upstream, protecting llama.cpp KV cache",
+        "interceptCacheProbe": "Intercept prompt caching probes",
+        "interceptCacheProbeDescription": "Respond locally to max_tokens≤1 probe requests, preventing llama.cpp KV cache pollution"
       },
       "logConfig": {
         "title": "Log Management",

@@ -299,6 +299,13 @@ pub struct ClaudeCodeOptimizerConfig {
     /// 拦截 count_tokens 请求，本地估算 token 数，保护 llama.cpp KV cache
     #[serde(default = "default_true")]
     pub intercept_count_tokens: bool,
+    /// 拦截 Claude Desktop prompt caching 探针请求（max_tokens ≤ 1），本地直接返回
+    ///
+    /// Claude Desktop 在正式请求前会发一组 max_tokens=1 的分段探测来刷入
+    /// Anthropic prompt cache。这些请求被转发到 llama.cpp 会污染 KV cache slot
+    /// 且没有任何收益——llama.cpp 不支持 Anthropic prompt caching。
+    #[serde(default = "default_true")]
+    pub intercept_cache_probe: bool,
 }
 
 impl Default for ClaudeCodeOptimizerConfig {
@@ -307,6 +314,7 @@ impl Default for ClaudeCodeOptimizerConfig {
             enabled: true,
             strip_billing_header: true,
             intercept_count_tokens: true,
+            intercept_cache_probe: true,
         }
     }
 }

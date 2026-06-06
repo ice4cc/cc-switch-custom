@@ -329,6 +329,7 @@ export interface ClaudeCodeOptimizerConfig {
   enabled: boolean;
   stripBillingHeader: boolean;
   interceptCountTokens: boolean;
+  interceptCacheProbe: boolean;
 }
 
 export interface LogConfig {
